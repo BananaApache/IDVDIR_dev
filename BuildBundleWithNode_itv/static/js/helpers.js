@@ -55,13 +55,34 @@ function descendants(node, depth = 0, proofObj = window.proof){
 }
 window.descendants = descendants;
 
+function getNodeFromParent(nodeList, parentName) {
+	let nodes = []
+	for (let node of nodeList) {
+		const match = node.tptp.match(/hoverParent\((("[^']+"))\)/);
+		if (!match) {
+			continue;
+		}
+		if (match[1].includes(parentName)) {
+			// console.log("node", node, "parentName", parentName);
+			nodes.push(node);
+		}
+	}
+
+	return nodes;
+}	
+window.getNodeFromParent = getNodeFromParent;
+
 function assignColorToNode(color, node) {
+	// console.log("assigning color", color, "to node", node.name);
+	
 	try{
 		node.graphviz.fillcolor = color;
 		node.svgNode.style.fill = color;
 	}
 	catch(e){}
 }
+
+window.assignColorToNode = assignColorToNode;
 
 function nodeIsUninteresting(node){
 	// the final conclusion is always interesting.
@@ -104,6 +125,8 @@ function getNodeName(hovered){
 	return window.interpretation ? hovered.querySelector("text").getAttribute("proofKey") : hovered.querySelector("title").innerHTML;
 }
 
+window.getNodeName = getNodeName;
+
 function showGV(dot) {
 	showLoadingSpinner()
 	graphviz.renderDot(htmlDecode(dot));
@@ -124,14 +147,14 @@ function showGV(dot) {
 	});
 }
 
-
-
 function nodeHoverEventListener(e) {
 	if (e.buttons != 0) {
 		return
 	}
 	let nodeName = getNodeName(e.currentTarget);
 	let node = proof[nodeName];
+
+	// console.log("hovered node", node);
 
 	let nodeInfo = document.getElementById("nodeInfo");
 	let tptpTextareaOpen = "";
@@ -144,6 +167,7 @@ function nodeHoverEventListener(e) {
 		interestingnessHTML = `<b>Interestingness: </b>${node.info.interesting}<br>`;
 	}
 
+	// this is changing nodeInfo inside settings
 	nodeInfo.innerHTML = `<hr>
 		<b>Name:</b> ${node['name']}<br>
 		<b>Type:</b> ${node['type']}<br>
@@ -162,7 +186,7 @@ function nodeHoverEventListener(e) {
 			</h4>
 			<textarea id="tptpTextarea" class="${tptpTextareaOpen}">${node['tptp']}</textarea>
 		</div>
-  `
+  	`
 
 	recolorNodesByInterest()
 
@@ -191,7 +215,6 @@ function nodeHoverEventListener(e) {
 		return `#${hex(r)}${hex(g)}${hex(b)}`;
 	}
 
-
 	let anc = ancestors(node);
 	let minDepth = 0;
 	anc.forEach(function (a) {
@@ -208,18 +231,164 @@ function nodeHoverEventListener(e) {
 		}
 	});
 
+	//@========================================================================
+	//~ D&E added for hoverParent functionality
+	if (node.tptp.includes("hoverParent")) {
+		let ignoredAnc = [];
 
-	for (let [a, depth] of anc) {
-		if(a.graphviz.fillcolor != "#000000")
-			assignColorToNode(colorHelper(depth, minDepth, maxDepth), a);
+		const match = node.tptp.match(/hoverParent\((("[^']+"))\)/)
+		if (match) {
+			const hoverParentName = match[1].replaceAll('"', '');
+			// console.log("hoverParentName", hoverParentName);
+			ignoredAnc.push([proof[hoverParentName], -1]);
+
+			let currNode = proof[hoverParentName];
+			let currDepth = -1;
+			while (ancestors(currNode).length > 0) { 
+				currNode = ancestors(currNode)[0][0];
+				ignoredAnc.push([currNode, currDepth - 1]);
+				currDepth--;
+			}
+
+			// console.log("ancestors after hoverParent", ignoredAnc);
+		}
+
+		let minDepth = 0;
+		ignoredAnc.forEach(function (a) { //~ same code as Jacks but for ignoredAnc
+			if (a[1] < minDepth) {
+				minDepth = a[1];
+			}
+		});
+
+		for (let [a, depth] of ignoredAnc) { //~ same code as Jacks but coloring for ignoredAnc
+			if(a.graphviz.fillcolor != "#000000")
+				assignColorToNode(colorHelper(depth, minDepth, maxDepth), a);
+		}
 	}
-	for (let [d, depth] of des) {
-		if(d.graphviz.fillcolor != "#000000")
-			assignColorToNode(colorHelper(depth, minDepth, maxDepth), d);
+	//@========================================================================
+
+	//@========================================================================
+	//~ D&E added for hovering of descendants for pre-start nodes
+	if (!node.tptp.includes("level")) {
+		let nodes = getNodeFromParent(nodeList, node.name)
+
+		console.log("nodes from getNodeFromParent", nodes);
+
+		let ignoredDes = [];
+
+		if (nodes.length > 0) {
+			ignoredDes = Array.from(nodes).map(n => [n, 1]);
+	
+			for (let node of nodes) {
+				let currNode = node;
+				let currDepth = 1;
+				for (let descendant of descendants(currNode)) {
+					// currNode = descendants(currNode)[0][0];
+					ignoredDes.push([descendant[0], currDepth + 1]);
+					currDepth++;
+				}
+			}
+	
+			console.log("descendants after hoverParent", ignoredDes);
+		}
+		else {
+			let tmpDescendants = descendants(node);
+			for (let tmpDes of tmpDescendants) {
+				let nodes = getNodeFromParent(nodeList, tmpDes[0].name);
+				let loopDepth = 1;
+				while (nodes.length == 0) {
+					console.log("tmpDes", tmpDes);
+					ignoredDes.push([tmpDes[0], loopDepth + 1]);
+					tmpDes = descendants(tmpDes[0])[0];
+					console.log("newtmpDes", tmpDes);
+					nodes = getNodeFromParent(nodeList, tmpDes[0].name); //! error happens here
+					loopDepth++;
+				}
+				ignoredDes.push([tmpDes[0], loopDepth + 1]);
+				ignoredDes.push(...Array.from(nodes).map(n => [n, 2]));
+			
+				for (let node of nodes) {
+					let currNode = node;
+					let currDepth = 2;
+					for (let descendant of descendants(currNode)) {
+						// currNode = descendants(currNode)[0][0];
+						ignoredDes.push([descendant[0], currDepth + 1]);
+						currDepth++;
+					}
+				}
+
+				console.log("descendants after hoverParent", ignoredDes);			
+			}
+		}
+
+		let maxDepth = 0;
+		ignoredDes.forEach(function (d) {
+			if (d[1] > maxDepth) {
+				maxDepth = d[1];
+			}
+		});
+
+		for (let [d, depth] of ignoredDes) {
+			if(d.graphviz.fillcolor != "#000000")
+				assignColorToNode(colorHelper(depth, minDepth, maxDepth), d);
+		}
+
+
+		//~ ancestors part for pre-start nodes
+		let ignoredAnc = [];
+
+		let index = -1;
+		for (let ancNode of ancestors(node)) {
+			ignoredAnc.push([ancNode[0], index]);
+			index--;
+		}
+
+		let minDepth = 0;
+		ignoredAnc.forEach(function (a) { //~ same code as Jacks but for ignoredAnc
+			if (a[1] < minDepth) {
+				minDepth = a[1];
+			}
+		});
+
+		for (let [a, depth] of ignoredAnc) { //~ same code as Jacks but coloring for ignoredAnc
+			if(a.graphviz.fillcolor != "#000000")
+				assignColorToNode(colorHelper(depth, minDepth, maxDepth), a);
+		}
+
+		if(node.graphviz.fillcolor != "#000000")
+			assignColorToNode(colorHelper(0, minDepth, maxDepth), node);
+	}
+	//@========================================================================
+	else {
+		for (let [a, depth] of anc) {
+			if(a.graphviz.fillcolor != "#000000")
+				assignColorToNode(colorHelper(depth, minDepth, maxDepth), a);
+		}
+		for (let [d, depth] of des) {
+			if(d.graphviz.fillcolor != "#000000")
+				assignColorToNode(colorHelper(depth, minDepth, maxDepth), d);
+		}
+	
+		if(node.graphviz.fillcolor != "#000000")
+			assignColorToNode(colorHelper(0, minDepth, maxDepth), node);
 	}
 
-	if(node.graphviz.fillcolor != "#000000")
-		assignColorToNode(colorHelper(0, minDepth, maxDepth), node);
+
+	//@========================================================================
+	//~ D&E added for hoverNode functionality
+	if (node.tptp.includes("hoverNode")) {
+		const match = node.tptp.match(/hoverNode\((('[^']+'))\)/)
+
+		if (match) {
+			const hoverNodeName = match[1];
+			// console.log("hoverNodeName", hoverNodeName);
+			
+			assignColorToNode("#4eff20", proof[hoverNodeName]);
+		}
+	}
+	//@========================================================================
+
+
 }
 
 
