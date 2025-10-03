@@ -1,5 +1,5 @@
 
-import * as antlr4 from 'antlr4';
+import * as antlr4 from './antlr4.js';
 window.antlr4 = antlr4;
 
 import {default as Lexer} from './TPTPLexer';
@@ -195,7 +195,7 @@ class Formatter extends Listener {
 		// }
 
 		if(!["conjecture", "negated_conjecture", "axiom", "plain", "type", "theorem"].includes(role)){
-			console.log(`"${role}" role not shown for "${ctx.name().getText()}"`);
+			// console.log(`"${role}" role not shown for "${ctx.name().getText()}"`); //@ COMMENTED OUT
 			return;
 		}
 
@@ -227,7 +227,7 @@ class Formatter extends Listener {
 			}
 			node.info = infoObj;
 		} catch (e) {
-			console.log(`"${node.name}" has no useful info (or we failed getting it)`)
+			// console.log(`"${node.name}" has no useful info (or we failed getting it)`)
 			// console.log(e)
 		}
 
@@ -238,15 +238,15 @@ class Formatter extends Listener {
 			getParentsFromSource(source, node);
 		}
 		catch (e) {
-			console.log(`"${node.name}" has no sources (or we failed getting them).`)
+			// console.log(`"${node.name}" has no sources (or we failed getting them).`)
 		}
 
         try {
             getNodeLevel(source, node);
         }
         catch (e) {
-            console.log(`"${node.name}" has no level (or we failed getting it).`);
-			console.log(e);
+            // console.log(`"${node.name}" has no level (or we failed getting it).`);
+			// console.log(e);
         }
 
 		this.node_map[node.name] = node;

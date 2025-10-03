@@ -1,4 +1,4 @@
-import { parseProof, proofToGV } from './parser.js'
+import { parseProof, proofToGV } from './parserIDV.js'
 
 function choose(choices) {
 	var index = Math.floor(Math.random() * choices.length);

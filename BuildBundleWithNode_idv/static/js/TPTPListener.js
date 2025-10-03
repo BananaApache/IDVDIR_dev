@@ -1,6 +1,6 @@
 // Generated from BNF2ANTLR/g4/TPTP.g4 by ANTLR 4.13.2
 // jshint ignore: start
-import antlr4 from 'antlr4';
+import antlr4 from './antlr4.js';
 
 // This class defines a complete listener for a parse tree produced by TPTPParser.
 export default class TPTPListener extends antlr4.tree.ParseTreeListener {
