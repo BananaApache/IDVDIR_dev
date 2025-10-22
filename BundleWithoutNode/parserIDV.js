@@ -300,9 +300,8 @@ function getAllLevels(other_nodes) {
 	while (changed) {
 		changed = false;
 		for (const [name, node] of Object.entries(other_nodes)) {
-			if (levels[name] !== undefined) continue; // already assigned
+			if (levels[name] !== undefined) continue; 
 			const parents = node.parents || [];
-			// ensure all parent levels are known
 			if (parents.every(p => levels[p] !== undefined)) {
 			const maxParent = parents.length
 				? Math.max(...parents.map(p => levels[p]))
