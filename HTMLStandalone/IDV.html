@@ -25,6 +25,10 @@
     </script>
 
     <style>
+      title {
+        display: none;
+      }
+      
       html,
       body {
         font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
@@ -439,7 +443,8 @@ PROOF_GOES_HERE
 
       <p id="proofText" style="display: none"></p>
 
-      <script src="../BuildBundleWithNode_idv/static/js/IDVbundle.js"></script>
+      <script src="../BundleWithoutNode/IDVbundle.js"></script>
+      <!-- <script src="../BuildBundleWithNode_idv/static/js/IDVbundle.js"></script> -->
       <!-- <script src="../BuildBundleWithNode_itv/static/js/bundle.js"></script> -->
       <!-- <script src="https://tptp.org/CGIFormData/IDVBundle.js"></script> -->
       <script>
@@ -454,7 +459,7 @@ PROOF_GOES_HERE
 
           // We might have to try again if the graph isn't loaded yet
           if (keys.length < Object.keys(window.proof).length) {
-            setTimeout(removeTooltips, 500);
+            setTimeout(removeTooltips, 2000);
             return;
           }
 
@@ -488,7 +493,7 @@ PROOF_GOES_HERE
             assignInterestingnessToHeightAndWidth();
             showGV(proofToGV(proof));
             if (window.interpretation) {
-            	removeTooltips();
+            	// removeTooltips();
             }
             // Weird Hacks for initializing gui
             document.querySelector("#settings").children[0].click();

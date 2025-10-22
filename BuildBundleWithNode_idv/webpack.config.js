@@ -1,7 +1,7 @@
 const path = require('path');
 
 module.exports = {
-  entry: './static/js/helpers.js',
+  entry: './static/js/helpersIDV.js',
   output: {
     path: path.resolve(__dirname, './static/js'),
     filename: 'IDVbundle.js'

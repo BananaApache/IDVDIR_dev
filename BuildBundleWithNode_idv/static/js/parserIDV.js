@@ -25,7 +25,8 @@ function getNodeShape(node) {
 		axiom: "invtriangle",
 		conjecture: "house",
 		negated_conjecture: "invhouse",
-		plain: "ellipse"
+		plain: "ellipse",
+		hypothesis: "diamond"
 	}
 	if (stripParens(node.formula) == "$false") {
 		return "box";
@@ -194,7 +195,7 @@ class Formatter extends Listener {
 		// 	return;
 		// }
 
-		if(!["conjecture", "negated_conjecture", "axiom", "plain", "type", "theorem"].includes(role)){
+		if(!["conjecture", "negated_conjecture", "axiom", "plain", "type", "theorem", "hypothesis"].includes(role)){
 			// console.log(`"${role}" role not shown for "${ctx.name().getText()}"`); //@ COMMENTED OUT
 			return;
 		}
@@ -383,6 +384,9 @@ let proofToGV = function (nodes) {
     }
 
 	gvLines.push("}");
+
+	console.log(gvLines.join('\n'));
+
 	return gvLines.join('\n');
 }
 
