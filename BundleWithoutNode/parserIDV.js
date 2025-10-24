@@ -287,41 +287,6 @@ function nodeToGV(s) {
 	}
 }
 
-function getAllLevels(other_nodes) {		
-	const levels = {};
-	let changed = true;
-
-	for ([name, node] of Object.entries(other_nodes)) {
-		if (!node.parents || node.parents.length === 0) {
-			levels[name] = 0;
-		}
-	}
-
-	while (changed) {
-		changed = false;
-		for (const [name, node] of Object.entries(other_nodes)) {
-			if (levels[name] !== undefined) continue; 
-			const parents = node.parents || [];
-			if (parents.every(p => levels[p] !== undefined)) {
-			const maxParent = parents.length
-				? Math.max(...parents.map(p => levels[p]))
-				: 0;
-			levels[name] = maxParent + 1;
-			changed = true;
-			}
-		}
-	}
-
-
-	const groupedLevels = {};
-	for (const [name, lvl] of Object.entries(levels)) {
-		if (!groupedLevels[lvl]) groupedLevels[lvl] = [];
-			groupedLevels[lvl].push(name);
-	}
-
-	return groupedLevels;
-}
-
 // nodes is a JSON object where the keys are node names.
 // and the values are the JSON objects of the nodes.
 let proofToGV = function (nodes) {
@@ -364,7 +329,7 @@ let proofToGV = function (nodes) {
 	}
 
 	gvLines.push("digraph G {");
-	gvLines.push("node [style=filled];");
+	gvLines.push('node [style=filled, fontname="JetBrains Mono", fontsize=10];');
 	gvLines.push("newrank=\"true\"");
 
     // let clusterColor = 'lightgrey';
@@ -379,12 +344,6 @@ let proofToGV = function (nodes) {
 	gvLines.push("}");
 	//end Top Row
 
-	groupedLevels = getAllLevels(nodes)
-
-	for (const [lvl, names] of Object.entries(groupedLevels)) {
-		gvLines.push(`{ rank = same; ${names.map(n => `"${n}"`).join(" ")} }`);
-	}
-
 	for(let lang of langs){
         if (!window.interpretation){
 	    	gvLines.push(`subgraph cluster${lang}s {`);
@@ -392,10 +351,9 @@ let proofToGV = function (nodes) {
         }
 		ns[lang].forEach(nodeToGV(gvLines));
         if (!window.interpretation) {
-			// gvLines.push(`{rank=same; ` + ns[`top_${lang}`].map((e) => `"${e.name}"`).join(' ') + `}`);
-			gvLines.push(`}`);
-		}
-
+		    gvLines.push(`{rank=same; ` + ns[`top_${lang}`].map((e) => `"${e.name}"`).join(' ') + `}`);
+		    gvLines.push(`}`);
+        }
 	}
 
     // Add Level Information to GraphViz
